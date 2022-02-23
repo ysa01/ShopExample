@@ -43,21 +43,23 @@ public class WalletServiceImpl implements WalletService {
 
 	@Override
 	public List<Wallet> getWallets(Long userId) {
-		//String response= this.restTemplate.getForObject("http://localhost:8005/wallet/"+userId,String.class);
+		
 		ObjectMapper mapper = new ObjectMapper();
+		//Walletleri liste olarak walet appten aldım
 		List<Wallet> response = mapper.convertValue(this.restTemplate.getForObject("http://localhost:8005/wallet/"+userId,List.class), new TypeReference<List<Wallet>>() { });
+		//usera ait sepet içeriğini çektim
 		ShoppingCart shoppingCart = shoppingCartRepository.findShoppingCartById(userId);
 		List<Wallet> wallets = new ArrayList<Wallet>();
-		Set<Item> list = new HashSet<Item>(shoppingCart.getItems());
-		
-		Map<Long,Double> map = new HashMap<Long,Double>();	
-		
-		double	totalCartAmount = list.stream().mapToDouble(x -> x.getPrice().doubleValue()).sum();
-				
-		Wallet selectedWallet = response.stream().filter(x->x.getAmount() >= totalCartAmount).findAny().orElse(null);
-		
+		Map<Long,Double> map = new HashMap<Long,Double>();
 		List<Long> selectedWalletIds = new ArrayList<>();
 		
+		//Sepet içindeki Itemların tutarını topladım.
+		Set<Item> list = new HashSet<Item>(shoppingCart.getItems());		
+		double	totalCartAmount = list.stream().mapToDouble(x -> x.getPrice().doubleValue()).sum();
+		
+		//walltten gelen kullanıcıya ait wallelerin, sepet tutarından büyük olanını bulmaya çalışıyorum direk ondan çekmek için
+		Wallet selectedWallet = response.stream().filter(x->x.getAmount() >= totalCartAmount).findAny().orElse(null);
+				
 		if(selectedWallet == null) {
 		
 			double totalWalletAmount = response.stream().mapToDouble(x -> x.getAmount()).sum();
@@ -73,14 +75,16 @@ public class WalletServiceImpl implements WalletService {
 		for (Map.Entry<Long, Double> entry : map.entrySet()) {
 			
 			if(selectedWalletTotalAmount <= totalCartAmount){
-				
+			//Burda içinde sepet tutarından az olan hesapların bakiyesini sıfırlamak için onları tespit ediyorum.	
 			selectedWalletTotalAmount = selectedWalletTotalAmount + entry.getValue();			
 			selectedWalletIds.add(entry.getKey());
 			}
 			}
 		
-		} 
+		}else {throw new RuntimeException("Bakiye Yetersiz");} 
 		}
+		//Bu methodla sıfırlayacağımız hesaplar ve sepet tutarını wallet app'e post ederek , 
+		//hesapları sıfıladıktan sonra (güncelleyerek) , kalan tutarı içinde para olan bir hesaptan düşürmeyi amaçladım.
 		postWalletExtract(selectedWalletIds);
 		wallets.add(selectedWallet);
 		return wallets;
