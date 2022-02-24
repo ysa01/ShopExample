@@ -14,17 +14,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
-import javax.management.RuntimeErrorException;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,30 +40,33 @@ public class WalletServiceImpl implements WalletService {
 
 	@Override
 	public List<Wallet> getWallets(Long userId) {
-		
+		Long cartId=1l;
 		ObjectMapper mapper = new ObjectMapper();
 		//Walletleri liste olarak walet appten aldım
 		List<Wallet> response = mapper.convertValue(this.restTemplate.getForObject("http://localhost:8005/wallet/"+userId,List.class), new TypeReference<List<Wallet>>() { });
 		//usera ait sepet içeriğini çektim
-		ShoppingCart shoppingCart = shoppingCartRepository.findShoppingCartById(userId);
+		ShoppingCart shoppingCart = shoppingCartRepository.findShoppingCartById(cartId);
 		List<Wallet> wallets = new ArrayList<Wallet>();
 		Map<Long,Double> map = new HashMap<Long,Double>();
-		List<Long> selectedWalletIds = new ArrayList<>();
+		Map<Long,Double> selectedWalletsMap = new HashMap<Long,Double>();
+		List<Long> selectedWalletIds = new ArrayList<Long>();
 		
 		//Sepet içindeki Itemların tutarını topladım.
 		Set<Item> list = new HashSet<Item>(shoppingCart.getItems());		
 		double	totalCartAmount = list.stream().mapToDouble(x -> x.getPrice().doubleValue()).sum();
 		
-		//walltten gelen kullanıcıya ait wallelerin, sepet tutarından büyük olanını bulmaya çalışıyorum direk ondan çekmek için
+		//walltte app'ten gelen kullanıcıya ait wallelerin, sepet tutarından büyük olanını bulmaya çalışıyorum direk ondan çekmek için
 		Wallet selectedWallet = response.stream().filter(x->x.getAmount() >= totalCartAmount).findAny().orElse(null);
 				
 		if(selectedWallet == null) {
 		
 			double totalWalletAmount = response.stream().mapToDouble(x -> x.getAmount()).sum();
-		
+			
 			if(totalWalletAmount >= totalCartAmount){
-		
-				for(Wallet wallet : response){
+				
+				List<Wallet> responsSorted = response.stream().sorted(Comparator.comparingDouble(Wallet :: getAmount)).collect(Collectors.toList());
+				
+				for(Wallet wallet : responsSorted){
 					map.put(wallet.getId() , wallet.getAmount());
 				}	
 			 		
@@ -76,24 +76,41 @@ public class WalletServiceImpl implements WalletService {
 			
 			if(selectedWalletTotalAmount <= totalCartAmount){
 			//Burda içinde sepet tutarından az olan hesapların bakiyesini sıfırlamak için onları tespit ediyorum.	
-			selectedWalletTotalAmount = selectedWalletTotalAmount + entry.getValue();			
-			selectedWalletIds.add(entry.getKey());
+				selectedWalletTotalAmount = selectedWalletTotalAmount + entry.getValue();			
+				selectedWalletsMap.put(entry.getKey(), entry.getValue());
+				selectedWalletIds.add(entry.getKey());
 			}
 			}
+		//Burda bakiyesi artacak hesabın key ve value değerlerini bulup güncelledim.
+		  Long maxWalletKey  = Collections.max(selectedWalletsMap.entrySet(), Comparator.comparingDouble(Map.Entry::getValue)).getKey();
+		  selectedWalletTotalAmount = selectedWalletsMap.entrySet().stream().mapToDouble(x -> x.getValue()).sum();
+		  double remainingWalletAmount = selectedWalletTotalAmount-totalCartAmount;
+		  selectedWalletsMap.put(maxWalletKey, remainingWalletAmount);
+		  //Bu forda bakiyesi 0 olacak hesapların key valu değerlerini buldum
+		  for (Map.Entry<Long, Double> entry : selectedWalletsMap.entrySet()) {
+				
+				if(entry.getKey()!= maxWalletKey ){
+				selectedWalletsMap.put(entry.getKey(), 0.00);
+				}}
 		
 		}else {throw new RuntimeException("Bakiye Yetersiz");} 
 		}
 		//Bu methodla sıfırlayacağımız hesaplar ve sepet tutarını wallet app'e post ederek , 
 		//hesapları sıfıladıktan sonra (güncelleyerek) , kalan tutarı içinde para olan bir hesaptan düşürmeyi amaçladım.
-		postWalletExtract(selectedWalletIds);
 		wallets.add(selectedWallet);
 		return wallets;
 		
 		}
+	public void postWallet(Map<Long,Double> postMap) {
+		int userId=1024;
+
+		
+		//ResponseEntity<String> message = this.restTemplate.postForEntity("http://localhost:8005/wallet/extract/"+userId,map,String.class);
+	}
 	
-	public void postWalletExtract (List<Long> walletIds) {
+	public String postWalletExtract (List<Long> walletIds) {
 		
-		
+		return null;
 	}
 		
 	

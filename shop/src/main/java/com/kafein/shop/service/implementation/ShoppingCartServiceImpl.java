@@ -23,7 +23,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     @Override
     public ShoppingCart create(ShoppingCart newCart) {
-        if (newCart.getId() != null) {
+        if (newCart.getId() == null) {
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST);
         }
       

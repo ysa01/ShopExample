@@ -27,4 +27,8 @@ public class WalletController {
 		return null;
 	}
 	
+//	public String getAllWalletExtract () {
+//		walletService.postWalletExtract(null)
+//		return null;
+//	}
 }

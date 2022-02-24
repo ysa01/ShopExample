@@ -8,5 +8,6 @@ public interface WalletService {
 	
 	List<Wallet> getWallets(Long userId);
 	
+	String postWalletExtract(List<Long> walletIds);
 
 }
