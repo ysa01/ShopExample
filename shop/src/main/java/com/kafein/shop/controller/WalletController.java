@@ -1,5 +1,7 @@
 package com.kafein.shop.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,13 +24,9 @@ public class WalletController {
 		this.walletService = walletService;
 	}
 	@GetMapping("/{id}")
-	public ResponseEntity<Wallet> getAllShoppingEntity (@PathVariable Long id){
-		walletService.getWallets(id);
-		return null;
+	public ResponseEntity<String> getAllShoppingEntity (@PathVariable Long id){
+		
+		return walletService.getWallets(id);
 	}
 	
-//	public String getAllWalletExtract () {
-//		walletService.postWalletExtract(null)
-//		return null;
-//	}
 }

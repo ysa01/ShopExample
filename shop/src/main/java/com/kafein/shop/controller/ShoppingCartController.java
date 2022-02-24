@@ -1,6 +1,5 @@
 package com.kafein.shop.controller;
 
-import com.kafein.shop.dto.Wallet;
 import com.kafein.shop.entity.Item;
 import com.kafein.shop.entity.ShoppingCart;
 import com.kafein.shop.service.ShoppingCartService;

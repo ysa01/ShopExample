@@ -1,6 +1,7 @@
 package com.kafein.wallet.controller;
 
 import com.kafein.wallet.entity.Wallet;
+import com.kafein.wallet.entity.UpdateWalletIdAndDto;
 import com.kafein.wallet.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,9 +32,9 @@ public class WalletController {
     }
     
     @PostMapping("/extract/{userId}")
-    public ResponseEntity<List<Wallet>> getAllWallets(@PathVariable Long userId, Map<Long, Double> map) {
+    public ResponseEntity<List<Wallet>> getAllWallets(@PathVariable Long userId,@RequestBody List<UpdateWalletIdAndDto> map) {
         try {
-            return new ResponseEntity<>(walletService.getWalletsByUserId(userId), HttpStatus.OK);
+            return new ResponseEntity<>(walletService.getWalletUpdate(userId , map), HttpStatus.OK);
         } catch (HttpClientErrorException e) {
             return new ResponseEntity<>(e.getStatusCode());
         } catch (Exception e) {
