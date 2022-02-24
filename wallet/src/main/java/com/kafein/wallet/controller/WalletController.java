@@ -31,7 +31,7 @@ public class WalletController {
     }
     
     @PostMapping("/extract/{userId}")
-    public ResponseEntity<List<Wallet>> getAllWallets(@PathVariable Long userId, Map<Long, Long> map) {
+    public ResponseEntity<List<Wallet>> getAllWallets(@PathVariable Long userId, Map<Long, Double> map) {
         try {
             return new ResponseEntity<>(walletService.getWalletsByUserId(userId), HttpStatus.OK);
         } catch (HttpClientErrorException e) {

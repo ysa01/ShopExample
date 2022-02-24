@@ -22,6 +22,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -95,17 +96,16 @@ public class WalletServiceImpl implements WalletService {
 		
 		}else {throw new RuntimeException("Bakiye Yetersiz");} 
 		}
-		//Bu methodla sıfırlayacağımız hesaplar ve sepet tutarını wallet app'e post ederek , 
+		
 		//hesapları sıfıladıktan sonra (güncelleyerek) , kalan tutarı içinde para olan bir hesaptan düşürmeyi amaçladım.
+		postWallet(selectedWalletsMap);
 		wallets.add(selectedWallet);
 		return wallets;
 		
 		}
 	public void postWallet(Map<Long,Double> postMap) {
-		int userId=1024;
-
-		
-		//ResponseEntity<String> message = this.restTemplate.postForEntity("http://localhost:8005/wallet/extract/"+userId,map,String.class);
+	int userId=1024;
+	   ResponseEntity<String> message =  this.restTemplate.postForEntity("http://localhost:8005/wallet/extract/"+userId,postMap,String.class);
 	}
 	
 	public String postWalletExtract (List<Long> walletIds) {
