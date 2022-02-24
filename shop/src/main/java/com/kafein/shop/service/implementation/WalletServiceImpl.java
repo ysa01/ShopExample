@@ -61,7 +61,7 @@ public class WalletServiceImpl implements WalletService {
 		double	totalCartAmount = list.stream().mapToDouble(x -> x.getPrice().doubleValue()).sum();
 		
 		//walltte app'ten gelen kullanıcıya ait wallelerin, sepet tutarından büyük olanını bulmaya çalışıyorum direk ondan çekmek için
-		Wallet selectedWallet = response.stream().filter(x->x.getAmount() >= totalCartAmount).findAny().orElse(null);
+		Wallet selectedWallet = response.stream().filter(x->x.getAmount() >= totalCartAmount).findFirst().orElse(null);
 				
 		if(selectedWallet == null) {
 		
@@ -69,7 +69,9 @@ public class WalletServiceImpl implements WalletService {
 			
 			if(totalWalletAmount >= totalCartAmount){
 				
-				List<Wallet> responsSorted = response.stream().sorted(Comparator.comparingDouble(Wallet :: getAmount)).collect(Collectors.toList());
+				List<Wallet> responsSorted = response.stream()
+						.sorted(Comparator.comparingDouble(Wallet :: getAmount))
+						.collect(Collectors.toList());
 				
 				for(Wallet wallet : responsSorted){
 					map.put(wallet.getId() , wallet.getAmount());
@@ -91,18 +93,26 @@ public class WalletServiceImpl implements WalletService {
 		  selectedWalletTotalAmount = selectedWalletsMap.entrySet().stream().mapToDouble(x -> x.getValue()).sum();
 		  double remainingWalletAmount = selectedWalletTotalAmount-totalCartAmount;
 		  selectedWalletsMap.put(maxWalletKey, remainingWalletAmount);
-		  //Bu forda bakiyesi 0 olacak hesapların key valu değerlerini buldum
+		  //Bu formda bakiyesi 0 olacak hesapların key value değerlerini buldum
 		  for (Map.Entry<Long, Double> entry : selectedWalletsMap.entrySet()) {
 				
 				if(entry.getKey()!= maxWalletKey ){
 				selectedWalletsMap.put(entry.getKey(), 0.00);
 				}}
 		
-		}else {throw new RuntimeException("Bakiye Yetersiz");} }
+		}else { throw new RuntimeException("Bakiye Yetersiz");}	
 			
-			return postWallet(selectedWalletsMap);
+			return postWallet(selectedWalletsMap); 
+			}
+			
+		  double simpleWallet = selectedWallet.getAmount()- totalCartAmount;
+		  selectedWallet.setAmount(simpleWallet);
+		  
+			return getSimpleWallet(selectedWallet);
 		
 		}
+	
+	
 	public ResponseEntity<String> postWallet(Map<Long,Double> postMap) {
 		int userId=1024;
 		try {
@@ -123,13 +133,37 @@ public class WalletServiceImpl implements WalletService {
 			    
 			    HttpEntity<Object> requestEntity = new HttpEntity<Object>(list,headers);
 
-			    ResponseEntity<List<WalletIdAndAmountList>> response = this.restTemplate.exchange("http://localhost:8005/wallet/extract/"+userId, HttpMethod.POST, requestEntity,new ParameterizedTypeReference<List<WalletIdAndAmountList>>() {});
+			    ResponseEntity<List<WalletIdAndAmountList>> request = this.restTemplate.exchange("http://localhost:8005/wallet/extract/"+userId, HttpMethod.POST, requestEntity,new ParameterizedTypeReference<List<WalletIdAndAmountList>>() {});
 			
 		
 						
 		} catch (Exception e) {
 			
 			throw new RuntimeException(e);
+		}
+		
+	  return ResponseEntity.ok("Ödeme Başarılı");
+	}
+
+	@Override
+	public ResponseEntity<String> getSimpleWallet(Wallet wallet) {
+		
+		int userId=1202;
+		wallet.setAmount((long)wallet.getAmount());
+		try {						
+			    HttpHeaders headers = new HttpHeaders();
+			    
+			    headers.setContentType(MediaType.APPLICATION_JSON);
+			    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+			    
+			    HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
+
+			    String request = this.restTemplate.postForObject("http://localhost:8005/wallet/updateWallet", wallet, String.class);
+			
+						
+		} catch (Exception e) {
+			
+			throw new RuntimeException("Ödeme Başarısız");
 		}
 		
 	  return ResponseEntity.ok("Ödeme Başarılı");

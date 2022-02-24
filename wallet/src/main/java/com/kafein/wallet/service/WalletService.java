@@ -11,4 +11,5 @@ public interface WalletService {
     Wallet getWalletById(Long id);
     List<Wallet> getWalletsByUserId(Long userId);
 	List<Wallet> getWalletUpdate(Long userId, List<UpdateWalletIdAndDto> map);
+	String		 getSimpleWalletPay (Wallet wallet);
 }

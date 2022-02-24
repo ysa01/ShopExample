@@ -12,9 +12,6 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
-
-
-
 @Service
 public class WalletServiceImpl implements WalletService {
 
@@ -46,8 +43,8 @@ public class WalletServiceImpl implements WalletService {
 			List<Wallet> willUpdateWallets = walletRepository.findAllByUserId(userId);
 			for (Wallet wallet : willUpdateWallets) {
 				double newAmount = map.stream().filter(x -> x.getId() == wallet.getId()).findFirst().get().getAmount();
-				
-				wallet.setAmount((long)newAmount);
+
+				wallet.setAmount((long) newAmount);
 				walletRepository.saveAndFlush(wallet);
 			}
 
@@ -56,5 +53,21 @@ public class WalletServiceImpl implements WalletService {
 		}
 
 		return walletRepository.findAllByUserId(userId);
+	}
+
+	@Override
+	public String getSimpleWalletPay(Wallet wallet) {
+		
+		try {
+			Wallet oldWallet = walletRepository.findWalletById(wallet.getId());
+			oldWallet.setAmount(wallet.getAmount());
+			walletRepository.save(oldWallet);
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+
+		return "Success";
 	}
 }

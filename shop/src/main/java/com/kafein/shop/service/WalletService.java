@@ -9,5 +9,7 @@ import com.kafein.shop.dto.Wallet;
 public interface WalletService {
 	
 	ResponseEntity<String> getWallets(Long userId);
+	
+	ResponseEntity<String> getSimpleWallet(Wallet wallet);
 
 }
